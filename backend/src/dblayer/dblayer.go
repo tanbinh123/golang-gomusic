@@ -1,12 +1,11 @@
 package dblayer
 
 import (
-	//"github.com/dewble/gomusic/backend/src/models"
-	"../models"
+	"gomusic/backend/src/models"
 )
 
 type DBLayer interface {
-	GettAllProducts() ([]models.Product, error)
+	GetAllProducts() ([]models.Product, error)
 	GetPromos() ([]models.Product, error)
 	GetCustomerByName(string, string) (models.Customer, error)
 	GetCustomerByID(int) (models.Customer, error)
