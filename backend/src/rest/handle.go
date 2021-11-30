@@ -12,8 +12,8 @@ import (
 
 // 코드 확장성을 높이고자 핸들러의 모든 메서드를 포함하는 인터페이스를 만든다.
 type HandlerInterface interface {
-	GetProduct(c *gin.Context)
-	GetProms(c *gin.Context)
+	GetProducts(c *gin.Context)
+	GetPromos(c *gin.Context)
 	AddUser(c *gin.Context)
 	SignIn(c *gin.Context)
 	SignOut(c *gin.Context)
@@ -177,7 +177,7 @@ func (h *Handler) GetOrders(c *gin.Context) {
 }
 
 // 신용카드 결제 요청
-func (h *Handler) Charge(c *Handler) {
+func (h *Handler) Charge(c *gin.Context) {
 	if h.db == nil {
 		return
 	}
