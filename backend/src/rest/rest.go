@@ -75,3 +75,5 @@ func RunAPIWithHandler(address string, h HandlerInterface) error {
 
 	// 서버시작
 	// RESTful API 서버가 HTTP 클라이언트 요청을 기다리도록 반드시 API핸들러와 라우팅 정의 뒤에 호출
+	return r.Run(address)
+}

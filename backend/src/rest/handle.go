@@ -100,6 +100,11 @@ func (h *Handler) SignIn(c *gin.Context) {
 	// JSON 문서를 데이터 모델로 디코딩하고 SignInUser 데이터베이스 레이어 메서드를 호출하고 데이터베이스에 로그인 상태를 저장하거나 신규 사용자를 추가
 	customer, err = h.db.SignInUser(customer.Email, customer.Pass)
 	if err != nil {
+
+		// 잘못된 패스워드인 경우 forbiiden http 에러 반환
+		if err == dblayer.ErrINVALIDPASSWORD {
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -179,6 +184,22 @@ func (h *Handler) GetOrders(c *gin.Context) {
 // 신용카드 결제 요청
 func (h *Handler) Charge(c *gin.Context) {
 	if h.db == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "server database error"})
+		return
+	}
+
+	// Go 구조체를 정의하는 동시에 초기화
+	request := struct {
+		models.Order
+		Remember    bool   `json:"rememberCard"`
+		UseExisting bool   `json:"useExisting"`
+		Token       string `json:"token"`
+	}{}
+
+	err := c.ShouldBindJSON(&request)
+	// 파싱 중 에러 발생 시 보고 후 반환
+	if err != nil {
+		c.JSON(http.StatusBadRequest, request)
 		return
 	}
 }

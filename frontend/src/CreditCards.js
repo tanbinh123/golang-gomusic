@@ -80,29 +80,42 @@ class CreditCardForm extends React.Component {
     }
 
     async handleSubmit(event) {
-        
-        event.preventDefault();
-        console.log("Handle submit called, with name: " + this.state.value);
-        // Strip API를 통해 발급
-        let { token } = await this.props.stripe.createToken({ name: this.state.value });
-        if (token == null) {
-            console.log("invalid token");
-            this.setState({ status: FAILEDSTATE });
-            return;
-        }
 
-        let response = await fetch("/charge", {
+        event.preventDefault();
+        let id = "";
+
+        // 저장된 카드 사용이 아니라면 스트라이프에 토큰을 요청한다.
+        if (!this.state.useExisting) {
+            // Strip API를 통해 토큰 발급
+            let { token } = await this.props.stripe.createToken({ name: this.state.name });
+            if (token == null) {
+                console.log("invalid token");
+                this.setState({ status: FAILEDSTATE });
+                return;
+            }
+            id = token.id;
+        }
+        
+        // 요청을 생성하고 백엔드로 보낸다.
+        let response = await fetch("/users/charge", {
             method: "POST",
-            headers: { "Content-Type": "text/plain" },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                token: token.id,
-                operation: this.props.operation,
+                token: id,
+                customer_id: this.props.user,
+                product_id: this.props.productid,
+                sell_price: this.props.price,
+                rememberCard: this.state.remember !== undefined,
+                useExisting: this.state.useExisting
             })
         });
-        console.log(response.ok);
+
+        // 응답이 ok면 작업 성공
         if (response.ok) {
             console.log("Purchase Complete!");
             this.setState({ status: SUCCESSSTATE });
+        } else {
+            this.setState({ status: FAILEDSTATE });
         }
     }
 
