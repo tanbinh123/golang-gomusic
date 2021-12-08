@@ -60,12 +60,12 @@ func (db *DBORM) SignInUser(email, pass string) (customer models.Customer, err e
 	}
 
 	// 패스워드 문자열과 해시 값 비교
-	if !checkPassword(pass) {
+	if !checkPassword(customer.Pass, pass) {
 		return customer, ErrINVALIDPASSWORD
 	}
 
-	// 사용자 행을 나타내는 *gorm.DB 타입
-	result := db.Table("Customers").Where(&models.Customer{Email: email})
+	// 공유되지 않도록 패스워드 문자열 삭제
+	customer.Pass = ""
 
 	// loggedin 필드 업데이트
 	err = result.Update("loggedin", 1).Error
@@ -90,6 +90,26 @@ func (db *DBORM) SignOutUserById(id int) error {
 
 func (db *DBORM) GetCustomerOrdersByID(id int) (orders []models.Order, err error) {
 	return orders, db.Table("orders").Select("*").Joins("join customers on customers.id = customer_id").Joins("join products on products.id = product_id").Where("customer_id=?", id).Scan(&orders).Error //db.Find(&orders, models.Order{CustomerID: id}).Error
+}
+
+// orders 테이블에 결제 내역 추가
+func (db *DBORM) AddOrder(order models.Order) error {
+	return db.Create(&order).Error
+}
+
+// 신용카드 ID 조회
+func (db *DBORM) GetCreditCardCID(id int) (string, error) {
+	customerWithCCID := struct {
+		models.Customer
+		CCID string `gorm:"column:cc_customerid"`
+	}{}
+	return customerWithCCID.CCID, db.First(&customerWithCCID, id).Error
+}
+
+// 신용카드 정보 저장
+func (db *DBORM) SaveCreditCardForCustomer(id int, ccid string) error {
+	result := db.Table("customers").Where("id=?", id)
+	return result.Update("cc_customerid", ccid).Error
 }
 
 func hashPassword(s *string) error {

@@ -15,6 +15,9 @@ type DBLayer interface {
 	SignInUser(username, password string) (models.Customer, error)
 	SignOutUserById(int) error
 	GetCustomerOrdersByID(int) ([]models.Order, error)
+	AddOrder(models.Order) error
+	GetCreditCardCID(int) (string, error)
+	SaveCreditCardForCustomer(int, string) error
 }
 
 var ErrINVALIDPASSWORD = errors.New("Invalid password")

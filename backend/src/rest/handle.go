@@ -4,10 +4,14 @@ package rest
 import (
 	"gomusic/backend/src/dblayer"
 	"gomusic/backend/src/models"
+	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/stripe/stripe-go"
+	"github.com/stripe/stripe-go/charge"
+	"github.com/stripe/stripe-go/v72/customer"
 )
 
 // 코드 확장성을 높이고자 핸들러의 모든 메서드를 포함하는 인터페이스를 만든다.
@@ -199,7 +203,74 @@ func (h *Handler) Charge(c *gin.Context) {
 	err := c.ShouldBindJSON(&request)
 	// 파싱 중 에러 발생 시 보고 후 반환
 	if err != nil {
+		// JSON 형식의 요청 데이터를 request 구조체로 변환
 		c.JSON(http.StatusBadRequest, request)
 		return
 	}
+
+	// Set your secret key: remember to change this to your live secret key in production
+	// Keys can be obtained from: https://dashboard.stripe.com/account/apikeys
+	// They key below is just for testing
+	stripe.Key = "sk_test_51JqdjpHqNVgKzGGZR1CaBtIw3eOw4HvXZh4rvhynS3BSoiaIZ4GTnGXubXs6yjUb7bYfLuFIPhknozJ9aaOmDYRa00xcnUrXwz"
+	//test cards available at:	https://stripe.com/docs/testing#cards
+	//setting charge parameters
+
+	chargeP := &stripe.ChargeParams{
+		// 요청에 명시된 판매 가격
+		Amount: stripe.Int64(int64(request.Price)),
+		// 결제 통화
+		Currency: stripe.String("usd"),
+		// 설명
+		Description: stripe.String("GoMusic charge..."),
+	}
+
+	// 스트라이프 사용자 ID 초기화
+	stripeCustomerID := ""
+
+	//Either remembercard or use exeisting should be enabled but not both
+	if request.UseExisting {
+		// 저장된 카드 사용
+		log.Println("Getting credit card id...")
+		// 스트라이프 사용자 ID를 데이터베이스에서 조회하는 메서드
+		stripeCustomerID, err = h.db.GetCreditCardCID(request.CustomerID)
+		if err != nil {
+			log.Println(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	} else {
+		cp := &stripe.CustomerParams{}
+		cp.SetSource(request.Token)
+		customer, err := customer.New(cp)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		stripeCustomerID = customer.ID
+		if request.Remember {
+			// 스트라이프 사용자 id를 저장하고 데이터베이스에 저장된 사용자 ID와 연결한다.
+			err = h.db.SaveCreditCardForCustomer(request.CustomerID, stripeCustomerID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+		}
+	}
+
+	//we should check if the customer already ordered the same item or not but for simplicity, let's assume it's a new order
+	// 동일 상품 주문 여부 확인 없이 새로운 주문으로 가정
+	// *stripe.ChargeParams 타입 인스턴스에 스트라이프 사용자 ID를 설정한다.
+	chargeP.Customer = stripe.String(stripeCustomerID)
+	// 신용카드 결제 요청
+	_, err = charge.New(chargeP)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = h.db.AddOrder(request.Order)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
 }
