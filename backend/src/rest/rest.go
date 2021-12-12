@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )
 
@@ -72,6 +73,9 @@ func RunAPIWithHandler(address string, h HandlerInterface) error {
 		usersGroup.POST("/signin", h.SignIn)
 		usersGroup.POST("", h.AddUser)
 	}
+
+	// 리액트 앱 build 폴더가 ../public/build 상대 경로에 존재한다고 가정
+	r.Use(static.ServeRoot("/", "../../../frontend/build"))
 
 	// 서버시작
 	// RESTful API 서버가 HTTP 클라이언트 요청을 기다리도록 반드시 API핸들러와 라우팅 정의 뒤에 호출

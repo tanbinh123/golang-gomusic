@@ -2,6 +2,7 @@ package rest
 
 // 패키지 선언하고 외부 패키지 임포트
 import (
+	"fmt"
 	"gomusic/backend/src/dblayer"
 	"gomusic/backend/src/models"
 	"log"
@@ -11,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/charge"
-	"github.com/stripe/stripe-go/v72/customer"
+	"github.com/stripe/stripe-go/customer"
 )
 
 // 코드 확장성을 높이고자 핸들러의 모든 메서드를 포함하는 인터페이스를 만든다.
@@ -34,6 +35,7 @@ type Handler struct {
 // 좋은 설계 원칙에 따라 Handler 생성자를 만든다
 // 데이터베이스 레이어 타입의 초기화를 위해 이 생성자의 구현을 앞으로 계속 추가한다
 func NewHandler() (*Handler, error) {
+
 	// Handler 객체에 대한 포인터 생성
 	return new(Handler), nil
 }
@@ -46,6 +48,7 @@ func (h *Handler) GetProducts(c *gin.Context) {
 	// 이 객체를 통해 상품 목록을 조회
 
 	if h.db == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "server database error"})
 		return
 	}
 	products, err := h.db.GetAllProducts()
@@ -56,9 +59,11 @@ func (h *Handler) GetProducts(c *gin.Context) {
 			첫 번째 인자는 HTTP 상태코드, 두 번째는 응답의 바디
 		*/
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	// 에러가 발생하지 않았다면 데이터베이스에서 읽은 상품 반환, 데이터 모델에 JSON구조체 태그로 정의한 필드는 JSON 형식에 맞춰 변환
+	fmt.Printf("Found %d products\n", len(products))
 	c.JSON(http.StatusOK, products)
 }
 
