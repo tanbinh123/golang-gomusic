@@ -14,14 +14,6 @@ type MockDBLayer struct {
 	orders    []models.Order
 }
 
-func NewMockDBLayer(products []models.Product, customers []models.Customer, orders []models.Order) *MockDBLayer {
-	return &MockDBLayer{
-		products:  products,
-		customers: customers,
-		orders:    orders,
-	}
-}
-
 func NewMockDBLayerWithData() *MockDBLayer {
 	PRODUCTS := `[
 		{
@@ -436,6 +428,14 @@ func NewMockDBLayerWithData() *MockDBLayer {
 	return NewMockDBLayer(products, customers, orders)
 }
 
+func NewMockDBLayer(products []models.Product, customers []models.Customer, orders []models.Order) *MockDBLayer {
+	return &MockDBLayer{
+		products:  products,
+		customers: customers,
+		orders:    orders,
+	}
+}
+
 func (mock *MockDBLayer) GetMockProductData() []models.Product {
 	return mock.products
 }
@@ -451,7 +451,6 @@ func (mock *MockDBLayer) GetMockOrdersData() []models.Order {
 func (mock *MockDBLayer) SetError(err error) {
 	mock.err = err
 }
-
 func (mock *MockDBLayer) GetAllProducts() ([]models.Product, error) {
 
 	// 에러 반환
@@ -517,6 +516,26 @@ func (mock *MockDBLayer) GetCustomerByID(id int) (models.Customer, error) {
 		}
 	}
 	return result, fmt.Errorf("Could not find user with id %d", id)
+}
+
+func (mock *MockDBLayer) AddUser(customer models.Customer) (models.Customer, error) {
+	if mock.err != nil {
+		return models.Customer{}, mock.err
+	}
+	mock.customers = append(mock.customers, customer)
+	return customer, nil
+}
+
+func (mock *MockDBLayer) GetCustomerOrdersByID(id int) ([]models.Order, error) {
+	if mock.err != nil {
+		return nil, mock.err
+	}
+	for _, customer := range mock.customers {
+		if customer.ID == uint(id) {
+			return customer.Orders, nil
+		}
+	}
+	return nil, fmt.Errorf("Could not find customer id %d", id)
 }
 
 // 사용자를 로그인시키는 메서드

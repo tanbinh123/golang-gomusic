@@ -40,6 +40,10 @@ func NewHandler() (*Handler, error) {
 	return new(Handler), nil
 }
 
+func NewHandlerWithDB(db dblayer.DBLayer) HandlerInterface {
+	return &Handler{db: db}
+}
+
 // 상품 목록 조회
 // *gin.Context 타입 인자를 전달받는 GetProducts 메서드를 정의
 func (h *Handler) GetProducts(c *gin.Context) {
