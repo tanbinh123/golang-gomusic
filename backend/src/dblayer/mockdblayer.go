@@ -526,18 +526,6 @@ func (mock *MockDBLayer) AddUser(customer models.Customer) (models.Customer, err
 	return customer, nil
 }
 
-func (mock *MockDBLayer) GetCustomerOrdersByID(id int) ([]models.Order, error) {
-	if mock.err != nil {
-		return nil, mock.err
-	}
-	for _, customer := range mock.customers {
-		if customer.ID == uint(id) {
-			return customer.Orders, nil
-		}
-	}
-	return nil, fmt.Errorf("Could not find customer id %d", id)
-}
-
 // 사용자를 로그인시키는 메서드
 func (mock *MockDBLayer) SignInUser(email, password string) (models.Customer, error) {
 	if mock.err != nil {
@@ -564,6 +552,18 @@ func (mock *MockDBLayer) SignOutUserById(id int) error {
 		}
 	}
 	return fmt.Errorf("Could not sign out user %d", id)
+}
+
+func (mock *MockDBLayer) GetCustomerOrdersByID(id int) ([]models.Order, error) {
+	if mock.err != nil {
+		return nil, mock.err
+	}
+	for _, customer := range mock.customers {
+		if customer.ID == uint(id) {
+			return customer.Orders, nil
+		}
+	}
+	return nil, fmt.Errorf("Could not find customer id %d", id)
 }
 
 // 주문을 추가하는 메서드
