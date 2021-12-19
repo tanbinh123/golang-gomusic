@@ -17,7 +17,7 @@ type Product struct {
 	Description string
 }
 
-func (Product) Tablename() string {
+func (Product) TableName() string {
 	return "products"
 }
 
@@ -32,14 +32,14 @@ type Customer struct {
 	Orders    []Order `json:"orders"`
 }
 
-func (Customer) Tablename() string {
+func (Customer) TableName() string {
 	return "customers"
 }
 
 type Order struct {
 	gorm.Model
-	Product      `sql:"-"`
-	Customer     `sql:"-"`
+	Product
+	Customer
 	CustomerID   int       `json:"customer_id" gorm:"column:customer_id"`
 	ProductID    int       `json:"product_id" gorm:"column:product_id"`
 	Price        float64   `gorm:"column:price" json:"sell_price"`

@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"fmt"
+
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )
@@ -10,6 +12,11 @@ func RunAPI(address string) error {
 	if err != nil {
 		return err
 	}
+	return RunAPIWithHandler(address, h)
+}
+
+func RunMockAPI(address string) error {
+	h := NewMockHandler()
 	return RunAPIWithHandler(address, h)
 }
 
@@ -75,9 +82,17 @@ func RunAPIWithHandler(address string, h HandlerInterface) error {
 	}
 
 	// 리액트 앱 build 폴더가 ../public/build 상대 경로에 존재한다고 가정
-	r.Use(static.ServeRoot("/", "../../../frontend/build"))
+	r.Use(static.ServeRoot("/", "../../frontend/build/"))
 
 	// 서버시작
 	// RESTful API 서버가 HTTP 클라이언트 요청을 기다리도록 반드시 API핸들러와 라우팅 정의 뒤에 호출
 	return r.Run(address)
+}
+
+func MyCustomLogger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		fmt.Println("************************************")
+		c.Next()
+		fmt.Println("************************************")
+	}
 }

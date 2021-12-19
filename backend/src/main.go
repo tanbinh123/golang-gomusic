@@ -7,5 +7,5 @@ import (
 
 func main() {
 	log.Println("Main log....")
-	rest.RunAPI(":9090")
+	log.Fatal(rest.RunAPI("127.0.0.1:9090"))
 }

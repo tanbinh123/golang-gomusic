@@ -1,5 +1,6 @@
 import React from 'react';
 import { injectStripe, StripeProvider, Elements, CardElement } from 'react-stripe-elements';
+import Cookies from 'js-cookie';
 
 const INITIALSTATE = "INITIAL", SUCCESSSTATE = "COMPLETE", FAILEDSTATE = "FAILED";
 
@@ -7,14 +8,16 @@ class CreditCardForm extends React.Component {
     constructor(props) {
         super(props);
         this.handleSubmit = this.handleSubmit.bind(this);
-        this.handleInputChange = this.handleInputChange.bind(this);
+        this.handleChange = this.handleChange.bind(this);
         this.state = {
-            value: '',
-            status: INITIALSTATE
+            status: INITIALSTATE,
+            useExisting: false
         };
     }
 
     renderCreditCardInformation() {
+        const user = Cookies.getJSON('user');
+
         const style = {
             base: {
                 'fontSize': '20px',
@@ -24,27 +27,30 @@ class CreditCardForm extends React.Component {
         };
         const usersavedcard = <div>
             <div className="form-row text-center">
-                <button type="button" className="btn  btn-outline-success text-center mx-auto">Use saved card?</button>
+                <button type="submit" className="btn  btn-outline-success text-center mx-auto" onClick={()=>this.setState({useExisting:true})}>Use saved card?</button>
             </div>
             <hr />
         </div>
 
-        const remembercardcheck = <div className="form-row form-check text-center">
-            <input className="form-check-input" type="checkbox" value="" id="remembercardcheck" />
-            <label className="form-check-label" htmlFor="remembercardcheck">
-                Remember Card?
+        let remembercardcheck = null;
+        if (user.loggedin === true) {
+            remembercardcheck = <div className="form-row form-check text-center">
+                <input className="form-check-input" type="checkbox" value="" id="remembercardcheck" name='remember' onChange={this.handleChange} />
+                <label className="form-check-label" htmlFor="remembercardcheck">
+                    Remember Card?
             </label>
-        </div>;
-        // 뷰 반환
+            </div>;
+        }
         return (
             <div>
-                {usersavedcard}
-                <h5 className="mb-4">Payment Info</h5>
+          
                 <form onSubmit={this.handleSubmit}>
+                {(user.loggedin)?usersavedcard:null}
+                <h5 className="mb-4">Payment Info</h5>
                     <div className="form-row">
                         <div className="col-lg-12 form-group">
                             <label htmlFor="cc-name">Name On Card:</label>
-                            <input id="cc-name" name='cc-name' className="form-control" placeholder='Name on Card' onChange={this.handleInputChange} type='text' />
+                            <input id="cc-name" name='name' className="form-control" placeholder='Name on Card' onChange={this.handleChange} type='text' />
                         </div>
                     </div>
                     <div className="form-row">
@@ -65,7 +71,7 @@ class CreditCardForm extends React.Component {
         return (
             <div>
                 <h5 className="mb-4 text-success">Request Successfull....</h5>
-                <button type="submit" className="btn btn-success btn-large" data-dismiss="modal">Ok</button>
+                <button type="submit" className="btn btn-success btn-large" onClick={() => { this.props.toggle() }}>Ok</button>
             </div>
         );
     }
@@ -73,7 +79,7 @@ class CreditCardForm extends React.Component {
     renderFailure() {
         return (
             <div>
-                <h5 className="mb-4 text-danger"> Credit card information invalid, try again or exit</h5>
+                <h5 className="mb-4 text-danger"> Error occured while processing credit card... </h5>
                 {this.renderCreditCardInformation()}
             </div>
         );
@@ -83,10 +89,7 @@ class CreditCardForm extends React.Component {
 
         event.preventDefault();
         let id = "";
-
-        // 저장된 카드 사용이 아니라면 스트라이프에 토큰을 요청한다.
         if (!this.state.useExisting) {
-            // Strip API를 통해 토큰 발급
             let { token } = await this.props.stripe.createToken({ name: this.state.name });
             if (token == null) {
                 console.log("invalid token");
@@ -95,8 +98,7 @@ class CreditCardForm extends React.Component {
             }
             id = token.id;
         }
-        
-        // 요청을 생성하고 백엔드로 보낸다.
+
         let response = await fetch("/users/charge", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -110,7 +112,7 @@ class CreditCardForm extends React.Component {
             })
         });
 
-        // 응답이 ok면 작업 성공
+        // let response = await this.sendChargeRequest(token,false);
         if (response.ok) {
             console.log("Purchase Complete!");
             this.setState({ status: SUCCESSSTATE });
@@ -119,11 +121,13 @@ class CreditCardForm extends React.Component {
         }
     }
 
-
-    handleInputChange(event) {
+    handleChange(event) {
+        event.preventDefault();
+        const name = event.target.name;
+        const value = event.target.value;
         this.setState({
-            value: event.target.value
-        })
+            [name]: value
+        });
     }
 
     render() {
@@ -147,18 +151,18 @@ class CreditCardForm extends React.Component {
         );
     }
 }
+
 export default function CreditCardInformation(props) {
-    if(!props.show) {
-        return <div/>;
+    if (!props.show) {
+        return null;
     }
-    // 스트라이프 API를 사용해 CreditCardForm를 추가하면 createToken() 메서드를 호출할 수 있다.
     const CCFormWithStripe = injectStripe(CreditCardForm);
     return (
         <div>
-            {/*stripe provider*/}
-            <StripeProvider apiKey="pk_test_51JqdjpHqNVgKzGGZFZuBvitqdRPC5iN3nwYvdinqY2n5QcfozKRxCYT3sVQVRh26opBOFXz0IvbahgPC6IL7rqWh00ADHiTRK6">
+            {props.separator ? <hr /> : null}
+            <StripeProvider apiKey="pk_test_TYooMQauvdEDq54NiTphI7jx">
                 <Elements>
-                    <CCFormWithStripe operation={props.operation} />
+                    <CCFormWithStripe user={props.user} operation={props.operation} productid={props.productid} price={props.price} toggle={props.toggle} />
                 </Elements>
             </StripeProvider>
         </div>

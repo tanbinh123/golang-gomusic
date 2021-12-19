@@ -14,7 +14,7 @@ type DBORM struct {
 }
 
 func NewORM(dbname, con string) (*DBORM, error) {
-	db, err := gorm.Open(dbname, con)
+	db, err := gorm.Open(dbname, con+"?parseTime=true")
 	return &DBORM{
 		DB: db,
 	}, err
@@ -46,7 +46,9 @@ func (db *DBORM) AddUser(customer models.Customer) (models.Customer, error) {
 	// 패스워드를 해시 값으로 저장하고 래퍼런스를 남긴다.
 	hashPassword(&customer.Pass)
 	customer.LoggedIn = true
-	return customer, db.Create(&customer).Error
+	err := db.Create(&customer).Error
+	customer.Pass = ""
+	return customer, err
 }
 
 func (db *DBORM) SignInUser(email, pass string) (customer models.Customer, err error) {

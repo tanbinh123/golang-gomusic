@@ -34,14 +34,25 @@ type Handler struct {
 
 // 좋은 설계 원칙에 따라 Handler 생성자를 만든다
 // 데이터베이스 레이어 타입의 초기화를 위해 이 생성자의 구현을 앞으로 계속 추가한다
-func NewHandler() (*Handler, error) {
-
+func NewHandler() (HandlerInterface, error) {
+	db, err := dblayer.NewORM("mysql", "gomusic:gomusic123@/gomusic")
+	if err != nil {
+		return nil, err
+	}
 	// Handler 객체에 대한 포인터 생성
-	return new(Handler), nil
+	return &Handler{
+		db: db,
+	}, nil
 }
 
 func NewHandlerWithDB(db dblayer.DBLayer) HandlerInterface {
 	return &Handler{db: db}
+}
+
+func (h *Handler) GetMainPage(c *gin.Context) {
+	log.Println("Main page....")
+	c.String(http.StatusOK, "Main page for secure API!!")
+	//fmt.Fprintf(c.Writer, "Main page for secure API!!")
 }
 
 // 상품 목록 조회
@@ -50,7 +61,6 @@ func (h *Handler) GetProducts(c *gin.Context) {
 
 	// DB 인터페이스가 nil이 아닌 값으로 초기화 됐는지 확인.
 	// 이 객체를 통해 상품 목록을 조회
-
 	if h.db == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "server database error"})
 		return
@@ -79,6 +89,7 @@ func (h *Handler) GetPromos(c *gin.Context) {
 	// 이 객체를 통해 상품 목록을 조회
 
 	if h.db == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "server database error"})
 		return
 	}
 	promos, err := h.db.GetPromos()
@@ -95,37 +106,9 @@ func (h *Handler) GetPromos(c *gin.Context) {
 	c.JSON(http.StatusOK, promos)
 }
 
-// 사용자 로그인과 신규 가입
-func (h *Handler) SignIn(c *gin.Context) {
-	if h.db == nil {
-		return
-	}
-	var customer models.Customer
-
-	// HTTP 요청 바디에서 JSON 문서를 추출하고 객체로 디코딩한다.
-	// 아래의 경우 이 객체는 고객 데이터 모델을 나타내는 *models.Customer 타입이다
-	err := c.ShouldBindJSON(&customer)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// JSON 문서를 데이터 모델로 디코딩하고 SignInUser 데이터베이스 레이어 메서드를 호출하고 데이터베이스에 로그인 상태를 저장하거나 신규 사용자를 추가
-	customer, err = h.db.SignInUser(customer.Email, customer.Pass)
-	if err != nil {
-
-		// 잘못된 패스워드인 경우 forbiiden http 에러 반환
-		if err == dblayer.ErrINVALIDPASSWORD {
-			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, customer)
-}
-
 func (h *Handler) AddUser(c *gin.Context) {
 	if h.db == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "server database error"})
 		return
 	}
 	var customer models.Customer
@@ -147,8 +130,40 @@ func (h *Handler) AddUser(c *gin.Context) {
 	c.JSON(http.StatusOK, customer)
 }
 
+// 사용자 로그인과 신규 가입
+func (h *Handler) SignIn(c *gin.Context) {
+	if h.db == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "server database error"})
+		return
+	}
+	var customer models.Customer
+
+	// HTTP 요청 바디에서 JSON 문서를 추출하고 객체로 디코딩한다.
+	// 아래의 경우 이 객체는 고객 데이터 모델을 나타내는 *models.Customer 타입이다
+	err := c.ShouldBindJSON(&customer)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// JSON 문서를 데이터 모델로 디코딩하고 SignInUser 데이터베이스 레이어 메서드를 호출하고 데이터베이스에 로그인 상태를 저장하거나 신규 사용자를 추가
+	customer, err = h.db.SignInUser(customer.Email, customer.Pass)
+	if err != nil {
+
+		// 잘못된 패스워드인 경우 forbiiden http 에러 반환
+		if err == dblayer.ErrINVALIDPASSWORD {
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, customer)
+}
+
 func (h *Handler) SignOut(c *gin.Context) {
 	if h.db == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "server database error"})
 		return
 	}
 
@@ -172,6 +187,7 @@ func (h *Handler) SignOut(c *gin.Context) {
 // 사용자의 주문 내역 조회
 func (h *Handler) GetOrders(c *gin.Context) {
 	if h.db == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "server database error"})
 		return
 	}
 
@@ -210,6 +226,7 @@ func (h *Handler) Charge(c *gin.Context) {
 	}{}
 
 	err := c.ShouldBindJSON(&request)
+	log.Printf("request: %+v \n", request)
 	// 파싱 중 에러 발생 시 보고 후 반환
 	if err != nil {
 		// JSON 형식의 요청 데이터를 request 구조체로 변환

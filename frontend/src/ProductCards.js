@@ -1,10 +1,9 @@
 import React from 'react';
 
-// 개별 상품을 나타내는 Card 컴포넌트
 class Card extends React.Component {
     render() {
         const priceColor = (this.props.promo)? "text-danger" : "text-dark";
-        const sellPrice = (this.props.promo)?this.props.promotion:this.props.price;
+        const sellPrice = (this.props.promo)?this.props.promotion:this.props.price
         return (
             <div className="col-md-6 col-lg-4 d-flex align-items-stretch">
                 <div className="card mb-3">
@@ -21,12 +20,9 @@ class Card extends React.Component {
     }
 }
 
-// 상품 목록 전체를 나타내는 컴포넌트
 export default class CardContainer extends React.Component {
     constructor(props) {
-        // 부모 컴포넌트로 props 전달
         super(props);
-        // 컴포넌트의 state 객체 초기화
         this.state = {
             cards: []
         };
@@ -45,7 +41,7 @@ export default class CardContainer extends React.Component {
     render() {
         const cards = this.state.cards;
         let items = cards.map(
-            card => <Card key={card.id} {...card} promo={this.props.promo} showBuyModal={this.props.showBuyModal}/>
+            card => <Card  key={card.ID} {...card} promo={this.props.promo} showBuyModal={this.props.showBuyModal} />
         );
         return (
             <div>

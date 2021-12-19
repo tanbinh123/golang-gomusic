@@ -20,4 +20,12 @@ type DBLayer interface {
 	SaveCreditCardForCustomer(int, string) error
 }
 
+/*
+Passwords:
+mal:123
+john:1111
+jayne:123
+River:abc
+*/
+
 var ErrINVALIDPASSWORD = errors.New("Invalid password")
