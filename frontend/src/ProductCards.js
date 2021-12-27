@@ -1,5 +1,6 @@
 import React from 'react';
 
+// 개별 상품을 나타내는 Card 컴포넌트
 class Card extends React.Component {
     render() {
         const priceColor = (this.props.promo)? "text-danger" : "text-dark";
@@ -20,9 +21,12 @@ class Card extends React.Component {
     }
 }
 
+// 상품 목록 전체를 나타내는 컴포넌트
 export default class CardContainer extends React.Component {
     constructor(props) {
+        // 부모 컴포넌트로 props 전달
         super(props);
+        // 컴포넌트의 state 객체 초기화
         this.state = {
             cards: []
         };
