@@ -27,11 +27,15 @@ function submitRequest(path, requestBody, handleSignedIn,handleError) {
 }
 
 
+// 로그인 폼 컴포넌트
 class SingInForm extends React.Component {
     constructor(props) {
         super(props);
+        // 사용자가 데이터를 입력하면 호출되는 함수
         this.handleChange = this.handleChange.bind(this);
+        // 폼을 제출하면 호출되는 함수
         this.handleSubmit = this.handleSubmit.bind(this);
+        // 로그인 실패시 errormessage 필드에 메시지를 저장한다.        
         this.handleError = this.handleError.bind(this);
         this.state = {
             errormessage: ''
@@ -220,13 +224,17 @@ export class SignInModalWindow extends React.Component {
     }
 }
 
+
+// 다른 파일에서 이 클래스를 사용하기 때문에 export 키워드를 사용
 export function BuyModalWindow(props) {
     return (
+        // Card 컴포넌트의 Buy버튼을 클릭하면 #buy ID에 해당하는 모달 윈도우를 출력한다.
         <Modal id="buy" tabIndex="-1" role="dialog" isOpen={props.showModal} toggle={props.toggle}>
             <div role="document">
                     <ModalHeader toggle={props.toggle} className="bg-success text-white">
                         Buy Item
                     </ModalHeader>
+                    {/* 신용카드 결제 폼 */}
                     <ModalBody>
                         <CreditCardInformation user={props.user} seperator={false} show={true} productid={props.productid} price={props.price} operation="Charge" toggle={props.toggle} />
                     </ModalBody>

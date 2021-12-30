@@ -41,9 +41,9 @@ class CreditCardForm extends React.Component {
             </label>
             </div>;
         }
+        // 뷰 반환
         return (
             <div>
-          
                 <form onSubmit={this.handleSubmit}>
                 {(user.loggedin)?usersavedcard:null}
                 <h5 className="mb-4">Payment Info</h5>
@@ -89,7 +89,10 @@ class CreditCardForm extends React.Component {
 
         event.preventDefault();
         let id = "";
+
+        // 저장된 카드 사용이 아니라면 스트라피으에 토큰을 요청한다.
         if (!this.state.useExisting) {
+            // Strip API를 통해 토큰 발급
             let { token } = await this.props.stripe.createToken({ name: this.state.name });
             if (token == null) {
                 console.log("invalid token");
@@ -99,6 +102,7 @@ class CreditCardForm extends React.Component {
             id = token.id;
         }
 
+        // 요청을 생성하고 백엔드로 보낸다.
         let response = await fetch("/users/charge", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -113,6 +117,7 @@ class CreditCardForm extends React.Component {
         });
 
         // let response = await this.sendChargeRequest(token,false);
+        // 응답이 ok면 작업 성공
         if (response.ok) {
             console.log("Purchase Complete!");
             this.setState({ status: SUCCESSSTATE });
