@@ -42,6 +42,7 @@ class SingInForm extends React.Component {
         }
     }
 
+    // 폼의 값을 state 객체에 저장하는 방식. 리액트에서 권장하는 폼 제어 방식
     handleChange(event) {
         const name = event.target.name;
         const value = event.target.value;
@@ -64,7 +65,9 @@ class SingInForm extends React.Component {
 
 
     render() {
+        // 에러 메시지
         let message = null;
+        // state에 에러 메시지가 있다면 출력
         if (this.state.errormessage.length !== 0) {
             message = <h5 className="mb-4 text-danger">{this.state.errormessage}</h5>;
 
@@ -97,10 +100,12 @@ class SingInForm extends React.Component {
 
 }
 
+// 가입 폼 컴포넌트
 class RegistrationForm extends React.Component {
     constructor(props) {
         super(props);
         this.handleSubmit = this.handleSubmit.bind(this);
+        // 로그인 실패시 errormessage 필드에 메시지를 저장
         this.state = {
             errormessage: ''
         }
@@ -181,6 +186,8 @@ class RegistrationForm extends React.Component {
     }
 }
 
+// 로그인 폼을 포함하는 부모 모달 윈도우
+// 초기값은 로그인 페이지이고 사용자가 New User? 링크를 클릭하면 가입 페이지로 변경한다.
 export class SignInModalWindow extends React.Component {
     constructor(props) {
         super(props);
@@ -205,6 +212,7 @@ export class SignInModalWindow extends React.Component {
    
 
     render() {
+        // state 객체의 값에 따라 SignInForm이나 RegistrationForm 컴포넌트를 모달 윈도우에 추가한다.
         let modalBody = <SingInForm handleNewUser={this.handleNewUser} handleSignedIn={this.props.handleSignedIn} />
         if (this.state.showRegistrationForm === true) {
             modalBody = <RegistrationForm handleSignedIn={this.props.handleSignedIn} />
